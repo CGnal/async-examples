@@ -22,6 +22,18 @@ async def mySafeComputation(x: int):
     return Right(x+1)
 
 
+async def myFirstComputation(x: int):
+    if x > 5:
+        raise TooLarge(x)
+
+    waiter = x % 2 + 1
+
+    print(f"Computation with {x} - {waiter}")
+    await asyncio.sleep(waiter)
+    print(f"Results of {x}")
+    return x+1
+
+
 async def processFuture(future):
     result = await future
     print(result)
@@ -50,7 +62,9 @@ async def main():
 
     process = pipeline([mySafeComputation])
 
-    computations = [process(i) for i in range(100)]
+    # computations = [process(i) for i in range(100)]
+
+    computations = [Promise.insert(1).then(myFirstComputation) for i in range(100)]
 
     rate_limit = AsyncLimiter(50, 5)
 

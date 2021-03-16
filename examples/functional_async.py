@@ -57,11 +57,11 @@ async def main():
 
     process = pipeline([mySafeComputation])
 
-    computations = [Promise.insert(Right(i)).then(lambda x: x.bind(mySafeComputation)) for i in [4,5,6]]
+    # computations = [Promise.insert(Right(i)).then(lambda x: x.bind(mySafeComputation)) for i in [4,5,6]]
 
     # computations = [process(i) for i in [4,5,6]]
 
-    # computations = [createComputation(3)]
+    computations = [Promise.insert(i).then(myFirstComputation).catch(lambda x: -1) for i in [4,5,6]]
 
     await asyncio.sleep(1)
 
