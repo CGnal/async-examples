@@ -6,13 +6,15 @@ from functools import reduce
 from pymonad.either import Left, Right, Either
 from pymonad.promise import Promise, _Promise
 from pymonad.tools import curry
+import numpy as np
 
-class TooLarge(Exception):
+
+class RandomError(Exception):
     pass
 
 async def mySafeComputation(x: int):
-    if x > 80:
-        return Left(x)
+    if np.random.randint(0,10)>8:
+        return Left(RandomError(f"Random Error with {x}"))
 
     waiter = x % 2 + 1
 
@@ -20,18 +22,6 @@ async def mySafeComputation(x: int):
     await asyncio.sleep(waiter)
     print(f"Results of {x}")
     return Right(x+1)
-
-
-async def myFirstComputation(x: int):
-    if x > 5:
-        raise TooLarge(x)
-
-    waiter = x % 2 + 1
-
-    print(f"Computation with {x} - {waiter}")
-    await asyncio.sleep(waiter)
-    print(f"Results of {x}")
-    return x+1
 
 
 async def processFuture(future):
@@ -56,17 +46,26 @@ async def throttle(c, rate_limit):
     async with rate_limit:
         return await c
 
+class Odd(ValueError):
+    pass
+
+from monads import safe
+
+@safe
+def mustBeEven(x: int) -> int:
+    if x % 2 == 0:
+        return x
+    else:
+        raise Odd("Number is odd")
 
 async def main():
     print("Starting...")
 
-    process = pipeline([mySafeComputation])
+    process = pipeline([mySafeComputation, lambda x: Right(x*3), mustBeEven])
 
-    # computations = [process(i) for i in range(100)]
+    computations = [process(i) for i in range(10)]
 
-    computations = [Promise.insert(1).then(myFirstComputation) for i in range(100)]
-
-    rate_limit = AsyncLimiter(50, 5)
+    rate_limit = AsyncLimiter(max_rate=5, time_period=5)
 
     await asyncio.sleep(1)
 

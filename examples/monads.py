@@ -1,11 +1,10 @@
+from typing import Callable
+
 from pymonad.tools import curry
 from pymonad.either import Either, Right, Left
 
-from functools import reduce
+from functools import reduce, wraps
 
-@curry(2)
-def func(a, b):
-    return a + b
 
 class TooHigh(ValueError):
     pass
@@ -13,11 +12,23 @@ class TooHigh(ValueError):
 class Odd(ValueError):
     pass
 
-def mustBeEven(x: int) -> Either:
+
+def safe(f: Callable) -> Callable:
+    @wraps(f)
+    def wrap(*args, **kwargs) -> Either:
+        try:
+            return Right(f(*args, **kwargs))
+        except Exception as e:
+            return Left(e)
+    return wrap
+
+@safe
+def mustBeEven(x: int) -> int:
     if x % 2 == 0:
-        return Right(x)
+        return x
     else:
-        return Left(Odd(x))
+        raise Odd("Number if odd")
+
 
 @curry(2)
 def mustBeLowerThan(value: int, x):
@@ -52,7 +63,7 @@ if __name__ == "__main__":
 
     process = pipeline([mustBeEven, mustBeLowerThan(5)])
 
-    myValue = process(9).either(handleError, getValue)
+    myValue = process(2).either(handleError, getValue)
 
     print(myValue)
 

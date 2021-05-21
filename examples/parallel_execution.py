@@ -7,12 +7,18 @@ from pymonad.either import Left, Right, Either
 from pymonad.promise import Promise, _Promise
 from pymonad.tools import curry
 
-class TooLarge(Exception):
+import numpy as np
+from monads import safe
+
+class Odd(ValueError):
+    pass
+
+class RandomError(Exception):
     pass
 
 async def mySafeComputation(x: int):
-    if x > 80:
-        return Left(x)
+    if np.random.randint(0,10)>8:
+        return Left(RandomError(f"Random Error with {x}"))
 
     waiter = x % 2 + 1
 
@@ -20,6 +26,13 @@ async def mySafeComputation(x: int):
     await asyncio.sleep(waiter)
     print(f"Results of {x}")
     return Right(x+1)
+
+@safe
+def mustBeEven(x: int) -> int:
+    if x % 2 == 0:
+        return x
+    else:
+        raise Odd("Number is odd")
 
 
 async def processFuture(future):
@@ -50,7 +63,7 @@ async def loopOverRange(input_range):
 
     rate_limit = AsyncLimiter(4, 5)
 
-    process = pipeline([mySafeComputation, mySafeComputation, mySafeComputation])
+    process = pipeline([mySafeComputation, lambda x: Right(x*3), mustBeEven])
 
     computations = [process(i) for i in input_range]
 
@@ -72,8 +85,8 @@ def main():
     from concurrent.futures import ProcessPoolExecutor
     import concurrent
 
-    batch_size = 100
-    total_range = list(range(1000))
+    batch_size = 10
+    total_range = list(range(50))
 
     futures = []
 
