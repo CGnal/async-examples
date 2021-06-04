@@ -31,7 +31,7 @@ def mustBeEven(x: int) -> int:
 
 
 @curry(2)
-def mustBeLowerThan(value: int, x):
+def mustBeLowerThan(value: int, x) -> Either:
     if (x < value):
         return Right(x)
     else:

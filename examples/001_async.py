@@ -4,7 +4,7 @@ from time import sleep
 async def myFirstComputation(x: int):
     print(f"Computation with {x}")
     await asyncio.sleep(x)
-    # sleep(x)
+    sleep(x)
     print(f"Results of {x}")
     return x+1
 

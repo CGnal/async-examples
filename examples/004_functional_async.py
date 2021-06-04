@@ -26,14 +26,14 @@ async def myFirstComputation(x: int):
 
 async def mySafeComputation(x: int):
     if x > 5:
-        return Left(x)
+        raise TooLarge(x)
 
     waiter = x % 2 + 1
 
     print(f"Computation with {x} - {waiter}")
     await asyncio.sleep(waiter)
     print(f"Results of {x}")
-    return Right(x+1)
+    return x+1
 
 
 async def processFuture(future):
@@ -48,8 +48,8 @@ def errorHandling(x):
 
 @curry(2)
 def pipeline(steps, value) -> _Promise[Either]:
-    promise = Promise.insert(Right(value))
-    return reduce(lambda either, step: either.then(lambda x: x.bind(step)), steps, promise)
+    return reduce(lambda promise, step: promise.then(step), steps, Promise.insert(value))\
+        .map(lambda x: Right(x)).catch(errorHandling)
 
 
 async def main():
@@ -57,11 +57,7 @@ async def main():
 
     process = pipeline([mySafeComputation])
 
-    # computations = [Promise.insert(Right(i)).then(lambda x: x.bind(mySafeComputation)) for i in [4,5,6]]
-
-    # computations = [process(i) for i in [4,5,6]]
-
-    computations = [Promise.insert(i).then(myFirstComputation).catch(lambda x: -1) for i in [4,5,6]]
+    computations = [process(i) for i in range(10)]
 
     await asyncio.sleep(1)
 

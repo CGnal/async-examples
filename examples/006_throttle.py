@@ -17,7 +17,7 @@ async def mySafeComputation(x: int):
     if np.random.randint(0,10)>8:
         return Left(RandomError(f"Random Error with {x}"))
 
-    waiter = x % 2 + 1
+    waiter = np.random.randint(0,5) # x % 2 + 1
 
     print(f"Computation with {x} - {waiter}")
     await asyncio.sleep(waiter)
@@ -71,9 +71,9 @@ async def main():
 
     process = pipeline([mySafeComputation, lambda x: Right(x*3), mustBeEven])
 
-    computations = [process(i) for i in range(10)]
+    computations = [process(i) for i in range(50)]
 
-    rate_limit = AsyncLimiter(max_rate=5, time_period=5)
+    rate_limit = AsyncLimiter(max_rate=10, time_period=10)
 
     await asyncio.sleep(1)
 

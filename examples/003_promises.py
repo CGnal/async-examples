@@ -43,6 +43,11 @@ def add(*args):
     return sum(args)
 
 @async_func
+def add(x, y):
+    return x + y
+
+
+@async_func
 def my_func(x: int, y: int = 1, z: int = 1):
     return (x + 2*y)/z
 
@@ -55,8 +60,10 @@ async def main():
 
     z = Promise.insert(3).map(fakeComputation)
 
+    # z = add(x, y)
+
     # promiseSum = add(x, y, z)
-    promiseSum = my_func(x, z=z)
+    promiseSum = my_func(x, y=1, z=z)
 
     final_result = promiseSum.map(fakeComputation)
 
