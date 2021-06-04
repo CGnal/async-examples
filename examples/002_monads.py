@@ -63,7 +63,7 @@ if __name__ == "__main__":
 
     process = pipeline([mustBeEven, mustBeLowerThan(5)])
 
-    myValue = process(2).either(handleError, getValue)
+    myValue = Either.insert(2).then(process).either(handleError, getValue)
 
     print(myValue)
 

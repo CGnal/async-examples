@@ -1,7 +1,8 @@
 import asyncio
 from time import sleep
 
-from functools import reduce
+from functools import reduce, wraps
+from typing import Callable
 
 from pymonad.either import Left, Right, Either
 from pymonad.promise import Promise, _Promise
@@ -49,7 +50,14 @@ async def throttle(c, rate_limit):
 class Odd(ValueError):
     pass
 
-from monads import safe
+def safe(f: Callable) -> Callable:
+    @wraps(f)
+    def wrap(*args, **kwargs) -> Either:
+        try:
+            return Right(f(*args, **kwargs))
+        except Exception as e:
+            return Left(e)
+    return wrap
 
 @safe
 def mustBeEven(x: int) -> int:
