@@ -1,6 +1,8 @@
 import asyncio
 from time import sleep
 
+from typing import Callable, TypeVar, Any, List
+
 from functools import reduce, wraps
 from typing import Callable
 
@@ -35,10 +37,12 @@ def errorHandling(x):
     return Left(x)
 
 
+T = TypeVar("T", bound=Any)
+
 @curry(2)
-def pipeline(steps, value) -> _Promise[Either]:
-    promise = Promise.insert(Right(value))
-    return reduce(lambda either, step: either.then(lambda x: x.bind(step)), steps, promise)
+def pipeline(steps: List[Callable[[T], Either[Exception, T]]], value) -> _Promise[Either[Exception, T]]:
+    return reduce(lambda promise, step: promise.then(step), steps, Promise.insert(value))\
+        .map(lambda x: Right(x)).catch(errorHandling)
 
 
 from aiolimiter import AsyncLimiter
@@ -69,21 +73,22 @@ def mustBeEven(x: int) -> int:
 async def main():
     print("Starting...")
 
-    process = pipeline([mySafeComputation, lambda x: Right(x*3), mustBeEven])
+    process: Callable[[int], _Promise[Either[Exception, int]]] = pipeline([
+        # getDataFromAPI,
+        mySafeComputation,
+        # writeToDb
+    ])
 
-    computations = [process(i) for i in range(50)]
-
-    rate_limit = AsyncLimiter(max_rate=10, time_period=10)
+    computations = [Promise.insert(i).then(process) for i in range(50)]
 
     await asyncio.sleep(1)
 
     print("Compuration instantiated...")
 
-    allResults = await asyncio.gather(*[throttle(c, rate_limit) for c in computations])
+    rate_limit = AsyncLimiter(max_rate=10, time_period=10)
 
-    print(allResults)
+    return await asyncio.gather(*[throttle(c, rate_limit) for c in computations])
 
-    return allResults
 
 if __name__ == "__main__":
 

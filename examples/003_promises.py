@@ -60,9 +60,6 @@ async def main():
 
     z = Promise.insert(3).map(fakeComputation)
 
-    # z = add(x, y)
-
-    # promiseSum = add(x, y, z)
     promiseSum = my_func(x, y=1, z=z)
 
     final_result = promiseSum.map(fakeComputation)

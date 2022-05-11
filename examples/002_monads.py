@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, TypeVar, Any, List
 
 from pymonad.tools import curry
 from pymonad.either import Either, Right, Left
@@ -31,7 +31,7 @@ def mustBeEven(x: int) -> int:
 
 
 @curry(2)
-def mustBeLowerThan(value: int, x) -> Either:
+def mustBeLowerThan(value: int, x: int) -> Either[Exception, int]:
     if (x < value):
         return Right(x)
     else:
@@ -47,11 +47,13 @@ def handleError(e: Exception):
         raise e
 
 
+T = TypeVar("T", bound=Any)
+
 @curry(2)
-def pipeline(steps, value) -> Either:
+def pipeline(steps: List[Callable[[T], Either[Exception, T]]], value) -> Either[Exception, T]:
     return reduce(lambda either, step: either.then(step), steps, Either.insert(value))
 
-def getValue(value):
+def getValue(value: T) -> T:
     return value
 
 if __name__ == "__main__":

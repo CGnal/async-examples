@@ -2,7 +2,7 @@ import asyncio
 from time import sleep
 
 from functools import reduce, wraps
-from typing import Callable
+from typing import Callable, TypeVar, Any
 
 from pymonad.either import Left, Right, Either
 from pymonad.promise import Promise, _Promise
@@ -55,9 +55,10 @@ def errorHandling(x):
     print(f"Error {x}")
     return Left(x)
 
+T = TypeVar("T", bound=Any)
 
 @curry(2)
-def pipeline(steps, value) -> _Promise[Either]:
+def pipeline(steps: Callable[[T], Either[Exception, T]], value: T) -> _Promise[Either[Exception, T]]:
     promise = Promise.insert(Right(value))
     return reduce(lambda either, step: either.then(lambda x: x.bind(step)), steps, promise)
 
@@ -69,24 +70,34 @@ async def throttle(c, rate_limit):
         return await c
 
 
-async def loopOverRange(input_range):
-    print(f"Starting on range {input_range}...")
+def getProcess() -> Callable[[int], _Promise[Either[Exception, int]]]:
+    return pipeline([
+        mySafeComputation,
+        lambda x: Right(x * 3),
+        mustBeEven
+    ])
 
-    rate_limit = AsyncLimiter(4, 5)
+async def loopOverRange(input_range, process):
 
-    process = pipeline([mySafeComputation, lambda x: Right(x*3), mustBeEven])
+    computations = [Promise.insert(i).then(process) for i in input_range]
 
-    computations = [process(i) for i in input_range]
+    rate_limit = AsyncLimiter(max_rate=10, time_period=10)
 
-    allResults = await asyncio.gather(*[throttle(c, rate_limit) for c in computations])
+    await asyncio.sleep(1)
 
-    print(allResults)
+    print("Compuration instantiated...")
 
-    return allResults
+    return await asyncio.gather(*[throttle(c, rate_limit) for c in computations])
+
+
 
 def basicMain(ibatch, input_range):
     print(f"Running batch {ibatch}")
-    return asyncio.run(loopOverRange(input_range))
+    return asyncio.run(
+        loopOverRange(
+            input_range, getProcess()
+        )
+    )
 
 
 def main():
@@ -97,12 +108,14 @@ def main():
     import concurrent
 
     batch_size = 10
-    total_range = list(range(50))
+    total_range = list(range(100))
 
     futures = []
 
+    jobs = groupIterable(total_range, batch_size)
+
     with ProcessPoolExecutor(max_workers=2) as executor:
-        for ibatch, batch in enumerate(groupIterable(total_range, batch_size)):
+        for ibatch, batch in enumerate(jobs):
             futures.append(executor.submit(basicMain, ibatch, batch))
 
     concurrent.futures.wait(futures)

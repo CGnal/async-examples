@@ -1,6 +1,7 @@
 import asyncio
 from time import sleep
 
+from typing import Callable, TypeVar, Any, List
 from functools import reduce
 
 from pymonad.either import Left, Right, Either
@@ -45,29 +46,45 @@ def errorHandling(x):
     print(f"Error {x}")
     return Left(x)
 
+T = TypeVar("T", bound=Any)
 
 @curry(2)
-def pipeline(steps, value) -> _Promise[Either]:
+def pipeline(steps: List[Callable[[T], Either[Exception, T]]], value) -> _Promise[Either[Exception, T]]:
     return reduce(lambda promise, step: promise.then(step), steps, Promise.insert(value))\
         .map(lambda x: Right(x)).catch(errorHandling)
+
+
+async def getDataFromAPI(x: int) -> _Promise[int]:
+    return Promise.insert(x)
+
+async def writeToDb(x: int) -> _Promise[int]:
+    return Promise.insert(x)
+
+
+def getProcess() -> Callable[[int], _Promise[Either[Exception, int]]]:
+    return pipeline([
+        getDataFromAPI,
+        mySafeComputation,
+        writeToDb
+    ])
 
 
 async def main():
     print("Starting...")
 
-    process = pipeline([mySafeComputation])
+    process: Callable[[int], _Promise[Either[Exception, int]]] = pipeline([
+        getDataFromAPI,
+        mySafeComputation,
+        writeToDb
+    ])
 
-    computations = [process(i) for i in range(10)]
+    executions = [Promise.insert(i).then(process) for i in range(10)]
 
     await asyncio.sleep(1)
 
     print("Compuration instantiated...")
 
-    allResults = [await processFuture(future) for future in asyncio.as_completed(computations)]
-
-    print(allResults)
-
-    return allResults
+    return [await processFuture(future) for future in asyncio.as_completed(executions)]
 
 if __name__ == "__main__":
 
