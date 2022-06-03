@@ -1,20 +1,26 @@
 import asyncio
-from time import sleep
+
 
 async def myFirstComputation(x: int):
+    """Example of a simple async computation (we mock computation using sleep)"""
     print(f"Entering co-routing {x}")
     await asyncio.sleep(x)
     print(f"Computation done with result: {x}")
     return x+1
 
 
-# async def processFuture(future):
-#     result = await future
-#     print(result)
-#     return result
+async def processFuture(future):
+    """Print result of the computation"""
+    result = await future
+    print(result)
+    return result
 
 
 async def main():
+    """
+    Basic async main to be executed by scheduling it in the event-loop
+    """
+
     print("Starting main async process...")
 
     computations = [myFirstComputation(2), myFirstComputation(1)]
@@ -30,6 +36,9 @@ async def main():
     return allResults
 
 async def main_as_completed():
+    """
+    Resolve computations using as_completed, that only returns values once their computation is finished
+    """
 
     computations = [myFirstComputation(2), myFirstComputation(1)]
 

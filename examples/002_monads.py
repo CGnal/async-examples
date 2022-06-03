@@ -1,9 +1,8 @@
+from functools import reduce, wraps
 from typing import Callable, TypeVar, Any, List
 
-from pymonad.tools import curry
 from pymonad.either import Either, Right, Left
-
-from functools import reduce, wraps
+from pymonad.tools import curry
 
 
 class TooHigh(ValueError):
@@ -14,6 +13,7 @@ class Odd(ValueError):
 
 
 def safe(f: Callable) -> Callable:
+    """Decorator to convert unsafe functions to safe functions, that returns Either monads"""
     @wraps(f)
     def wrap(*args, **kwargs) -> Either:
         try:
@@ -24,6 +24,7 @@ def safe(f: Callable) -> Callable:
 
 @safe
 def mustBeEven(x: int) -> int:
+    """Return the value if even, return an exception otherwise"""
     if x % 2 == 0:
         return x
     else:
@@ -32,6 +33,7 @@ def mustBeEven(x: int) -> int:
 
 @curry(2)
 def mustBeLowerThan(value: int, x: int) -> Either[Exception, int]:
+    """Return the value if lower than a threshold, return an exception otherwise"""
     if (x < value):
         return Right(x)
     else:
@@ -39,6 +41,7 @@ def mustBeLowerThan(value: int, x: int) -> Either[Exception, int]:
 
 
 def handleError(e: Exception):
+    """Function that provides business logic to handle errors"""
     if isinstance(e, TooHigh):
         return "Value too high"
     elif isinstance(e, Odd):

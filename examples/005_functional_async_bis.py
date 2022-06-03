@@ -12,19 +12,11 @@ maxLimit = 5
 class TooLarge(Exception):
     pass
 
-async def myFirstComputation(x: int):
-    if x > 5:
-        raise TooLarge(x)
-
-    waiter = x % 2 + 1
-
-    print(f"Computation with {x} - {waiter}")
-    await asyncio.sleep(waiter)
-    print(f"Results of {x}")
-    return x+1
-
-
 async def mySafeComputation(x: int):
+    """
+    Example of a simple async computation (we mock computation using sleep). Raising exception when
+    value is too large
+    """
     if x > 5:
         return Left(x)
 
@@ -37,11 +29,13 @@ async def mySafeComputation(x: int):
 
 
 async def processFuture(future):
+    """Print result of the computation"""
     result = await future
     print(result)
     return result
 
 def errorHandling(x):
+    """Function that provides business logic to handle errors"""
     print(f"Error {x}")
     return Left(x)
 

@@ -20,3 +20,5 @@ monads and async functionalities
 - *006_throttle.py* Examples to throttle execution of promises with rate-limiting functionalities
 - *007_parallel_execution.py* Integration between parallel and asynchronous functionalities
 
+For the Either monads and Railway Oriented Programming pattern, please do refer to this amazing talk:
+https://vimeo.com/113707214

@@ -2,13 +2,17 @@ import asyncio
 
 from pymonad.promise import Promise, _Promise
 
+
 async def fakeComputation(x: int):
+    """Example of a simple async computation (we mock computation using sleep)"""
     print(f"Pre Call [{x}]")
-    await asyncio.sleep(1 + x/3)
+    await asyncio.sleep(1 + x / 3)
     print(f"Post Call [{x}]")
     return x
 
+
 from typing import Awaitable
+
 
 def async_func(func):
     """
@@ -28,7 +32,6 @@ def async_func(func):
         return dict(await asyncio.gather(*kwargsTasks))
 
     async def async_wrap(*args, **kwargs):
-
         (_args, _kwargs) = await asyncio.gather(getArgs(args), getKwargs(kwargs))
 
         return func(*_args, **_kwargs)
@@ -38,9 +41,11 @@ def async_func(func):
 
     return wrapper
 
+
 @async_func
 def add(*args):
     return sum(args)
+
 
 @async_func
 def add(x, y):
@@ -49,11 +54,10 @@ def add(x, y):
 
 @async_func
 def my_func(x: int, y: int = 1, z: int = 1):
-    return (x + 2*y)/z
+    return (x + 2 * y) / z
 
 
 async def main():
-
     x = Promise.insert(1).map(fakeComputation)
 
     y = Promise.insert(2).map(fakeComputation)
@@ -72,6 +76,4 @@ async def main():
 
 
 if __name__ == "__main__":
-
     asyncio.run(main())
-

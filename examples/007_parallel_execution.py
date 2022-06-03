@@ -12,6 +12,7 @@ import numpy as np
 
 
 def safe(f: Callable) -> Callable:
+    """Decorator to convert unsafe functions to safe functions, that returns Either monads"""
     @wraps(f)
     def wrap(*args, **kwargs) -> Either:
         try:
@@ -28,6 +29,9 @@ class RandomError(Exception):
     pass
 
 async def mySafeComputation(x: int):
+    """
+    Example of a simple async computation (we mock computation using sleep). Raising exception randomly
+    """
     if np.random.randint(0,10)>8:
         return Left(RandomError(f"Random Error with {x}"))
 
@@ -40,6 +44,7 @@ async def mySafeComputation(x: int):
 
 @safe
 def mustBeEven(x: int) -> int:
+    """Return the value if even, return an exception otherwise"""
     if x % 2 == 0:
         return x
     else:
@@ -47,11 +52,13 @@ def mustBeEven(x: int) -> int:
 
 
 async def processFuture(future):
+    """Print result of the computation"""
     result = await future
     print(result)
     return result
 
 def errorHandling(x):
+    """Function that provides business logic to handle errors"""
     print(f"Error {x}")
     return Left(x)
 
@@ -66,11 +73,13 @@ def pipeline(steps: Callable[[T], Either[Exception, T]], value: T) -> _Promise[E
 from aiolimiter import AsyncLimiter
 
 async def throttle(c, rate_limit):
+    """Controlling rate at which computation resolution is achieved"""
     async with rate_limit:
         return await c
 
 
 def getProcess() -> Callable[[int], _Promise[Either[Exception, int]]]:
+    """Return function that create a computation given an input"""
     return pipeline([
         mySafeComputation,
         lambda x: Right(x * 3),
@@ -78,6 +87,7 @@ def getProcess() -> Callable[[int], _Promise[Either[Exception, int]]]:
     ])
 
 async def loopOverRange(input_range, process):
+    """Tasks to be resolved by a given worker"""
 
     computations = [Promise.insert(i).then(process) for i in input_range]
 
@@ -92,6 +102,7 @@ async def loopOverRange(input_range, process):
 
 
 def basicMain(ibatch, input_range):
+    """Worker main"""
     print(f"Running batch {ibatch}")
     return asyncio.run(
         loopOverRange(

@@ -16,6 +16,9 @@ class RandomError(Exception):
     pass
 
 async def mySafeComputation(x: int):
+    """
+    Example of a simple async computation (we mock computation using sleep). Raising exception randomly
+    """
     if np.random.randint(0,10)>8:
         return Left(RandomError(f"Random Error with {x}"))
 
@@ -28,11 +31,13 @@ async def mySafeComputation(x: int):
 
 
 async def processFuture(future):
+    """Print result of the computation"""
     result = await future
     print(result)
     return result
 
 def errorHandling(x):
+    """Function that provides business logic to handle errors"""
     print(f"Error {x}")
     return Left(x)
 
@@ -48,6 +53,7 @@ def pipeline(steps: List[Callable[[T], Either[Exception, T]]], value) -> _Promis
 from aiolimiter import AsyncLimiter
 
 async def throttle(c, rate_limit):
+    """Controlling rate at which computation resolution is achieved"""
     async with rate_limit:
         return await c
 
@@ -55,6 +61,7 @@ class Odd(ValueError):
     pass
 
 def safe(f: Callable) -> Callable:
+    """Decorator to convert unsafe functions to safe functions, that returns Either monads"""
     @wraps(f)
     def wrap(*args, **kwargs) -> Either:
         try:
@@ -65,6 +72,7 @@ def safe(f: Callable) -> Callable:
 
 @safe
 def mustBeEven(x: int) -> int:
+    """Return the value if even, return an exception otherwise"""
     if x % 2 == 0:
         return x
     else:
